@@ -1,0 +1,37 @@
+fileID = fopen('eyes.txt','w');
+
+m = eye(5);
+writeResults(fileID, m, "5");
+
+m = eye(50);
+writeResults(fileID, m, "50");
+
+m = eye(4,7);
+writeResults(fileID, m, "4,7");
+
+m = eye(16, 1); 
+writeResults(fileID, m, "16,1");
+
+fclose(fileID);
+
+
+
+function writeResults(fileID, m, t)
+fprintf(fileID, '%s\n', t);
+fprintf(fileID, '%s\n\n', matrix2mstr(m));
+end
+
+function mstr = matrix2mstr(m)
+mstr = '[';
+for i=1:size(m, 1)
+    mstr = append(mstr, '[');
+    for j=1:(size(m, 2) - 1)
+        mstr = append(mstr, num2str(m(i,j)));
+        mstr = append(mstr, ',');
+    end
+    mstr = append(mstr, num2str(m(i, size(m, 2))));
+    if 
+    mstr = append(mstr, '];');
+end
+mstr = append(mstr, ']');
+end             
