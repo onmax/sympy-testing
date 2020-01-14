@@ -11,6 +11,8 @@ from sympy.utilities.pytest import raises
 from sympy.solvers import solve
 from sympy.assumptions import Q
 from sympy.tensor.array import Array
+from sympy.matrices.common import *
+from sympy.matrices.matrices import *
 from sympy.matrices.expressions import MatPow
 
 from sympy.abc import a, b, c, d, x, y, z, t
@@ -25,6 +27,8 @@ m32 = Matrix([[1, 2], [3, 5], [1, 2]])
 m33 = Matrix([[1, -1, 3], [3, 4, 2], [0, 2, 5]])
 
 sm33 = Matrix([[4, 4, 4], [x, y, x], [2 * y, -1, z * x]])
+v1 = [11, 4, 2, 0]
+v2 = [-145, 54, 9135]
 
 
 def test_creation():
@@ -113,6 +117,23 @@ def test_abs():
     assert abs(m) == n
 
 
+def test_transpose():
+    def own_transpose(m):
+        mv = []
+        for i in range(m.shape[0]):
+            mv.append([])
+            for j in range(m.shape[1]):
+                mv[-1].append(m[i, j])
+        mt_ = [[mv[j][i] for j in range(len(mv))] for i in range(len(mv[0]))]
+        return Matrix(mt_)
+
+    assert m22.transpose() == own_transpose(m22)
+    assert m33.transpose() == own_transpose(m33)
+    assert m16.transpose() == own_transpose(m16)
+    assert m32.transpose() == own_transpose(m32)
+    assert sm33.transpose() == own_transpose(sm33)
+
+
 def test_shape():
     assert m22.shape == (2, 2)
     assert m12.shape == (1, 2)
@@ -121,6 +142,16 @@ def test_shape():
     assert m32.shape == (3, 2)
     assert m33.shape == (3, 3)
     assert Matrix().shape == (0, 0)
+
+
+def test_minor_submatrix():
+    successful_cases = parse_removecolrow()
+    for (m, i, j, ms) in successful_cases:
+        m = Matrix(m).minor_submatrix(i, j)
+        assert m == Matrix(ms)
+
+    raises(ValueError, lambda: m33.minor_submatrix(-4, 1))
+    raises(ValueError, lambda: m33.minor_submatrix(4, 1))
 
 
 def test_swaps():
@@ -162,7 +193,10 @@ def test_zeros():
     assert Matrix() == zeros(0)
 
     raises(ValueError, lambda: zeros(-1))
-    raises(ValueError, lambda: zeros(-42))
+    raises(ValueError, lambda: zeros(-42, 1))
+    raises(ValueError, lambda: zeros(10, -1))
+    raises(ValueError, lambda: zeros(3.2))
+    raises(ValueError, lambda: zeros(51.78))
 
 
 def test_ones():
@@ -178,7 +212,10 @@ def test_ones():
     assert Matrix() == ones(0)
 
     raises(ValueError, lambda: ones(-1))
-    raises(ValueError, lambda: ones(-42))
+    raises(ValueError, lambda: ones(-42, 1))
+    raises(ValueError, lambda: ones(10, -1))
+    raises(ValueError, lambda: ones(3.2))
+    raises(ValueError, lambda: ones(51.78))
 
 
 def test_eye():
@@ -195,6 +232,8 @@ def test_eye():
 
     raises(ValueError, lambda: eye(-1))
     raises(ValueError, lambda: eye(-42))
+    raises(ValueError, lambda: eye(3.2))
+    raises(ValueError, lambda: eye(51.78))
 
 
 def test_det():
@@ -285,6 +324,72 @@ def test_inv():
     raises(NonSquareMatrixError, lambda: m32.eigenvects())
 
 
+def test_qr():
+    def test_for_matrix(m, matlabq, matlabr):
+        Q, R = m.QRdecomposition()
+        a = Abs(Q.evalf()) - Abs(matlabq)
+        b = Abs(R.evalf()) - Abs(matlabr)
+        assert a.norm() < 0.000000000001 and b.norm() < 0.000000000001
+
+    successful_cases = parse_qr()
+    for case in successful_cases:
+        m = Matrix(case[0])
+        matlabq = Matrix(case[1])
+        matlabr = Matrix(case[2])
+        test_for_matrix(m, matlabq, matlabr)
+
+
+test_qr()
+
+
+def test_diag():
+
+    def own_diag(v):
+        nv = list(map(lambda x: [x], v))
+        return Matrix(nv)
+
+    assert diag(v1) == own_diag(v1)
+    assert diag(v2) == own_diag(v2)
+    assert diag(list(range(100, 1.5, 10000))) == own_diag(list(range(100, 1.5, 10000)))
+
+
+def test_cholesky():
+    successful_cases = parse_cholesky()
+    for (m, s) in successful_cases:
+        m = Matrix(m).cholesky().evalf()
+        assert Integer((m - Matrix(s)).norm()) == min(m.shape) - 2
+
+    m = Matrix([[1, 1, 3], [1, 3, 2], [3, 2, 5]])
+    raises(NonPositiveDefiniteMatrixError,
+           lambda: m32.cholesky())
+
+    raises(ValueError, lambda: m22.cholesky())
+    raises(ValueError, lambda: m33.cholesky())
+
+    raises(NonSquareMatrixError, lambda: m12.cholesky())
+    raises(NonSquareMatrixError, lambda: m32.cholesky())
+
+
+def test_charpoly():
+    def get_components(e):
+        l = [x.split(' + ') for x in e.split(' - ')]
+        flat = [item for sublist in l for item in sublist]
+        flat.sort()
+        return flat
+
+    def compare_charpolies(a, b):
+        e1 = a[a.index('(') + 1:a.index(',')]
+        e2 = b[b.index('(') + 1:b.index(',')]
+        assert get_components(e1) == get_components(e2)
+
+    successful_cases = parse_charpoly()
+    for (m, s) in successful_cases:
+        m = Matrix(m).charpoly()
+        compare_charpolies(sstr(m), s)
+
+    raises(NonSquareMatrixError, lambda: m12.cholesky())
+    raises(NonSquareMatrixError, lambda: m32.cholesky())
+
 '''
 test_creation()
 test_division()
@@ -294,4 +399,6 @@ test_eigenvals()
 test_det()
 test_eigenvectors()
 test_eye()
+test_diag()
+test_cholesky()
 '''
