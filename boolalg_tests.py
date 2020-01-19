@@ -71,12 +71,12 @@ class testerClass(unittest.TestCase):
             
         assert Not(True) is false
         assert Not(0) is true
+        assert Not(A) is ~A
         assert Not(And(And(True, 1), Or(1, False))) is false
         assert Not(Equality(2, 2)) is false
-
         assert Not.eval(Equality(1, 1).simplify()) is false
-
         assert Not(Xor(1, 0)).to_nnf(simplify=True) is false
+        raises(ValueError, lambda: Not(type(2)))
 
     def test_as_Boolean(self):
         
