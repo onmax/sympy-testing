@@ -219,7 +219,7 @@ class testerClass(unittest.TestCase):
     def test_as_set(self):
     
         assert true.as_set() == S.UniversalSet
-        assert false.as_set() == EmptySet()
+        assert false.as_set() == S.EmptySet
         assert x.as_set() == S.UniversalSet
         assert And(x < 1, sin(x) < 3).as_set() == (x < 1).as_set()
         raises(NotImplementedError, lambda: (sin(x) < 1).as_set())
