@@ -18,6 +18,7 @@ from sympy.matrices.expressions import MatPow
 from sympy.abc import a, b, c, d, x, y, z, t
 
 from parse import *
+import unittest
 
 m22 = Matrix(2, 2, [1, 2, 3, 4])
 m12 = Matrix(1, 2, [1, 2])
@@ -402,3 +403,5 @@ test_eye()
 test_diag()
 test_cholesky()
 '''
+if __name__ == '__main__':
+    unittest.main()
